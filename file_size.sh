@@ -33,22 +33,25 @@ help() {
 }
 
 # Initialize variables
-show_total=false
-only_total=false
+s_flag=false
+S_flag=false
 exit_code=0
 total_size=0
+_flag=0
 files=()
 
 # Parse options and files
 while [[ $# -gt 0 ]]; do
   case "$1" in
     -s)
-      show_total=true
+      s_flag=true
       shift
+      break
       ;;
     -S)
-      only_total=true
+      S_flag=true
       shift
+      break
       ;;
     --usage)
       usage
@@ -59,8 +62,8 @@ while [[ $# -gt 0 ]]; do
       exit 0
       ;;
     --)
-      shift
       files+=("$@")
+      shift
       break
       ;;
     -*)
@@ -70,6 +73,7 @@ while [[ $# -gt 0 ]]; do
     *)
       files+=("$1")
       shift
+      break
       ;;
   esac
 done
@@ -80,7 +84,7 @@ for file in "${files[@]}"; do
     size=$(stat -c%s "$file" 2>/dev/null)
     if [[ $? -eq 0 ]]; then
       total_size=$((total_size + size))
-      if [[ "$only_total" == false ]]; then
+      if [[ "$S_flag" == false ]]; then
         echo "$size $file"
       fi
     else
@@ -94,7 +98,7 @@ for file in "${files[@]}"; do
 done
 
 # Output total size if needed
-if [[ "$show_total" == true || "$only_total" == true ]]; then
+if [[ "$S_flag" == true || "$s_flag" == true ]]; then
   echo "Total size: $total_size"
 fi
 

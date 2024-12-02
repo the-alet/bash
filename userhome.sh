@@ -32,7 +32,7 @@ if [ ! -f "$file" ]; then
     error_exit "File '$file' not found." 2
 fi
 
-home_dir=$(awk -F: -v user="$login" '$1 == user {print $6}' "$file")
+home_dir=$(grep "^$login:" "$file" | cut -d: -f6)
 
 if [ -z "$home_dir" ]; then
     error_exit "User '$login' not found." 1

@@ -33,8 +33,8 @@ help() {
 }
 
 # Initialize variables
-s_flag=false
-S_flag=false
+s_flag=0
+S_flag=0
 exit_code=0
 total_size=0
 _flag=0
@@ -44,13 +44,11 @@ files=()
 while [[ $# -gt 0 ]]; do
   case "$1" in
     -s)
-      s_flag=true
-      shift
+      s_flag=1
       break
       ;;
     -S)
-      S_flag=true
-      shift
+      S_flag=1
       break
       ;;
     --usage)
@@ -62,44 +60,44 @@ while [[ $# -gt 0 ]]; do
       exit 0
       ;;
     --)
-      files+=("$@")
-      shift
       break
       ;;
     -*)
       echo "Error: Unsupported option $1"
       exit 2
       ;;
-    *)
-      files+=("$1")
-      shift
-      break
-      ;;
   esac
 done
 
 # Process each file
-for file in "${files[@]}"; do
-  if [[ -e "$file" ]]; then
-    size=$(stat -c%s "$file" 2>/dev/null)
-    if [[ $? -eq 0 ]]; then
-      total_size=$((total_size + size))
-      if [[ "$S_flag" == false ]]; then
-        echo "$size $file"
-      fi
-    else
-      echo "Error: Could not determine size of $file"
-      exit_code=1
-    fi
-  else
-    echo "Error: File $file does not exist"
+for file in "$@"
+do
+  if [[ "$file" == "--" && $_flag -eq 0 ]]; then
+    _flag=1
+    continue
+  fi
+
+  if [[ "$file" == "-s" || "$file" == "-S" ]] && [ $_flag -eq 0 ]; then
+    continue
+  fi
+
+  if ! [ -e "$file" ]; then
+    echo "File $file doesn't exists!" >&2
     exit_code=1
+    continue
+  fi
+
+  if [[ $s_flag -eq 1 || $S_flag -eq 1 ]]; then
+    total_size=$(($total_size + $(stat -c%s -- "$file")))
+  fi
+  if [[ $S_flag -eq 0 ]]; then
+    echo $(stat -c%s" "%n -- "$file")
   fi
 done
 
-# Output total size if needed
-if [[ "$S_flag" == true || "$s_flag" == true ]]; then
-  echo "Total size: $total_size"
+if [[ $s_flag -eq 1 || $S_flag -eq 1 ]]
+then
+  echo $total_size
 fi
 
 exit $exit_code
